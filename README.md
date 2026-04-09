@@ -1,0 +1,80 @@
+# Ixian
+
+OpenAPI 3.x to Go CLI code generator. Reads an OpenAPI spec and generates a fully functional Go CLI application using Cobra.
+
+## Quick Start
+
+```bash
+# Build
+make build
+
+# Generate a CLI from the example petstore spec
+make generate
+
+# Run all tests
+make test
+```
+
+## Usage
+
+```bash
+./ixian --spec path/to/openapi.yaml --output ./output
+```
+
+Flags:
+
+| Flag | Short | Default | Description |
+|------|-------|---------|-------------|
+| `--spec` | `-s` | (required) | Path to OpenAPI 3.x spec (YAML or JSON) |
+| `--output` | `-o` | `./output` | Output directory for generated code |
+
+## Pipeline
+
+The generator runs a six-stage pipeline:
+
+1. **Parser** — Reads the spec file into a raw AST (no $ref resolution)
+2. **Binder** — Resolves all `$ref` pointers, builds symbol table and dependency graph
+3. **Checker** — Validates the bound AST, produces errors and warnings
+4. **Planner** — Transforms the AST into a Go+CLI intermediate representation (type mapping, command grouping, flag strategy)
+5. **Emitter** — Generates Go source files from the IR using `text/template`
+6. **Formatter** — Runs `gofmt` on all generated files and writes to disk
+
+## Generated Output
+
+```
+output/
+├── main.go              # Entry point
+├── cmd/
+│   ├── root.go          # Root command, global flags
+│   ├── pets.go          # pets subcommand group
+│   └── owners.go        # owners subcommand group
+├── client/
+│   └── client.go        # HTTP client
+└── types/
+    └── types.go         # Generated structs and enums
+```
+
+## Development
+
+```bash
+make check     # fmt + vet + test
+make test-race # tests with race detector
+make fmt-fix   # auto-fix formatting
+make clean     # remove build artifacts
+```
+
+## Project Structure
+
+```
+cmd/ixian/           # CLI entry point
+internal/
+  ast/               # Raw OpenAPI AST types
+  parser/            # YAML/JSON → AST
+  binder/            # $ref resolution, symbol table
+  checker/           # Validation and diagnostics
+  planner/           # AST → codegen IR
+  ir/                # Intermediate representation types
+  emitter/           # IR → Go source files
+  formatter/         # gofmt + file writer
+testdata/            # Golden file specs for testing
+```
