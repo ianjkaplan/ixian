@@ -86,6 +86,25 @@ func TestEmitPetstore(t *testing.T) {
 		t.Error("root.go missing default base URL")
 	}
 
+	// Check custom headers support in root.go
+	if !strings.Contains(rootContent, `"header"`) {
+		t.Error("root.go missing --header flag")
+	}
+	if !strings.Contains(rootContent, "headers []string") {
+		t.Error("root.go missing headers slice variable")
+	}
+	if !strings.Contains(rootContent, "key:value") {
+		t.Error("root.go missing header format description")
+	}
+
+	// Check custom headers support in client.go
+	if !strings.Contains(clientContent, "Headers") {
+		t.Error("client.go missing Headers field")
+	}
+	if !strings.Contains(clientContent, "c.Headers") {
+		t.Error("client.go missing custom header application logic")
+	}
+
 	// Check auth in client.go
 	if !strings.Contains(clientContent, "authToken") {
 		t.Error("client.go missing authToken field for bearer auth")

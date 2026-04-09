@@ -39,6 +39,37 @@ The generator runs a six-stage pipeline:
 5. **Emitter** — Generates Go source files from the IR using `text/template`
 6. **Formatter** — Runs `gofmt` on all generated files and writes to disk
 
+## Authentication
+
+Ixian reads `securitySchemes` from the OpenAPI spec and generates corresponding CLI flags and client logic.
+
+| OpenAPI Scheme | Generated Flag | Behavior |
+|----------------|----------------|----------|
+| `type: http, scheme: bearer` | `--auth-token` | Sends `Authorization: Bearer <token>` header |
+| `type: http, scheme: basic` | `--auth-basic` | Sends `Authorization: Basic <credentials>` header |
+| `type: apiKey, in: header` | `--<key-name>` | Sends the API key as the specified header |
+| `type: apiKey, in: query` | `--<key-name>` | Appends the API key as a query parameter |
+
+Example:
+
+```bash
+# Bearer token auth
+./mycli --auth-token eyJhbG... pets list-pets
+
+# API key auth
+./mycli --x-api-key sk-abc123 pets list-pets
+```
+
+## Custom Headers
+
+The generated CLI supports a repeatable `--header` (`-H`) flag for passing arbitrary headers:
+
+```bash
+./mycli --header "X-Request-ID:abc123" --header "Accept-Language:en" pets list-pets
+```
+
+Headers are passed through to every HTTP request. Custom headers are applied after auth headers, so they can override auth if needed.
+
 ## Generated Output
 
 ```

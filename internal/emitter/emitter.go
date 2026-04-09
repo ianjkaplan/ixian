@@ -72,8 +72,13 @@ func groupCommands(cmds []ir.GoCommand) map[string][]ir.GoCommand {
 }
 
 var funcMap = template.FuncMap{
-	"toLower":   strings.ToLower,
-	"toTitle":   strings.Title,
+	"toLower": strings.ToLower,
+	"toTitle": func(s string) string {
+		if len(s) == 0 {
+			return s
+		}
+		return strings.ToUpper(s[:1]) + s[1:]
+	},
 	"hasPrefix": strings.HasPrefix,
 	"join":      strings.Join,
 }
@@ -239,6 +244,7 @@ import (
 var (
 	baseURL string
 	output  string
+	headers []string
 {{- range .ClientConfig.AuthSchemes}}
 	{{.GoName}} string
 {{- end}}
@@ -259,6 +265,7 @@ func Execute() {
 func init() {
 	rootCmd.PersistentFlags().StringVar(&baseURL, "base-url", "{{.ClientConfig.BaseURL}}", "API base URL")
 	rootCmd.PersistentFlags().StringVarP(&output, "output", "o", "json", "Output format (json, raw)")
+	rootCmd.PersistentFlags().StringArrayVarP(&headers, "header", "H", nil, "Custom headers in key:value format (repeatable)")
 {{- range .ClientConfig.AuthSchemes}}
 {{- if eq .Type "bearer"}}
 	rootCmd.PersistentFlags().StringVar(&{{.GoName}}, "{{.FlagName}}", "", "Bearer authentication token")
