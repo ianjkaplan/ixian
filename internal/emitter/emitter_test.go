@@ -82,11 +82,27 @@ func TestEmitPetstore(t *testing.T) {
 	if !strings.Contains(rootContent, "base-url") {
 		t.Error("root.go missing base-url flag")
 	}
+	if !strings.Contains(rootContent, "petstore.example.com") {
+		t.Error("root.go missing default base URL")
+	}
+
+	// Check auth in client.go
+	if !strings.Contains(clientContent, "authToken") {
+		t.Error("client.go missing authToken field for bearer auth")
+	}
+	if !strings.Contains(clientContent, `"Bearer "`) {
+		t.Error("client.go missing Bearer prefix in auth logic")
+	}
+	if !strings.Contains(clientContent, "X-API-Key") {
+		t.Error("client.go missing X-API-Key header for apiKey auth")
+	}
+
+	// Check auth flags in root.go
 	if !strings.Contains(rootContent, "auth-token") {
 		t.Error("root.go missing auth-token flag")
 	}
-	if !strings.Contains(rootContent, "petstore.example.com") {
-		t.Error("root.go missing default base URL")
+	if !strings.Contains(rootContent, "Bearer authentication token") {
+		t.Error("root.go missing bearer flag description")
 	}
 
 	// Check pets.go content

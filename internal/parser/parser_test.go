@@ -102,6 +102,57 @@ func TestParsePetstoreYAML(t *testing.T) {
 	}
 }
 
+func TestParseSecuritySchemes(t *testing.T) {
+	spec, err := Parse(testdataPath("petstore.yaml"))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Check global security requirement
+	if len(spec.Security) != 1 {
+		t.Fatalf("security requirements count = %d, want 1", len(spec.Security))
+	}
+	if _, ok := spec.Security[0]["bearerAuth"]; !ok {
+		t.Error("missing bearerAuth in global security")
+	}
+
+	// Check security schemes
+	if spec.Components == nil {
+		t.Fatal("components is nil")
+	}
+	if len(spec.Components.SecuritySchemes) != 2 {
+		t.Fatalf("securitySchemes count = %d, want 2", len(spec.Components.SecuritySchemes))
+	}
+
+	bearer, ok := spec.Components.SecuritySchemes["bearerAuth"]
+	if !ok {
+		t.Fatal("missing bearerAuth scheme")
+	}
+	if bearer.Type != "http" {
+		t.Errorf("bearerAuth type = %q, want %q", bearer.Type, "http")
+	}
+	if bearer.Scheme != "bearer" {
+		t.Errorf("bearerAuth scheme = %q, want %q", bearer.Scheme, "bearer")
+	}
+	if bearer.BearerFormat != "JWT" {
+		t.Errorf("bearerAuth bearerFormat = %q, want %q", bearer.BearerFormat, "JWT")
+	}
+
+	apiKey, ok := spec.Components.SecuritySchemes["apiKeyAuth"]
+	if !ok {
+		t.Fatal("missing apiKeyAuth scheme")
+	}
+	if apiKey.Type != "apiKey" {
+		t.Errorf("apiKeyAuth type = %q, want %q", apiKey.Type, "apiKey")
+	}
+	if apiKey.Name != "X-API-Key" {
+		t.Errorf("apiKeyAuth name = %q, want %q", apiKey.Name, "X-API-Key")
+	}
+	if apiKey.In != "header" {
+		t.Errorf("apiKeyAuth in = %q, want %q", apiKey.In, "header")
+	}
+}
+
 func TestParseBytesJSON(t *testing.T) {
 	jsonSpec := []byte(`{
 		"openapi": "3.0.3",

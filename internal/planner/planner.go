@@ -31,6 +31,15 @@ func (p *planner) plan() *ir.Plan {
 		plan.ClientConfig.BaseURL = p.bound.Spec.Servers[0].URL
 	}
 
+	// Map security schemes
+	if p.bound.Spec.Components != nil {
+		for name, scheme := range p.bound.Spec.Components.SecuritySchemes {
+			if auth := p.planAuth(name, scheme); auth != nil {
+				plan.ClientConfig.AuthSchemes = append(plan.ClientConfig.AuthSchemes, *auth)
+			}
+		}
+	}
+
 	// Generate types from schemas
 	for name, schema := range p.bound.SymbolTable {
 		goType := p.planType(name, schema)
@@ -194,6 +203,39 @@ func (p *planner) schemaToTypeName(s *ast.Schema) string {
 		}
 	}
 	return "any"
+}
+
+func (p *planner) planAuth(name string, scheme *ast.SecurityScheme) *ir.AuthScheme {
+	switch scheme.Type {
+	case "http":
+		switch scheme.Scheme {
+		case "bearer":
+			return &ir.AuthScheme{
+				Name:     name,
+				Type:     "bearer",
+				FlagName: "auth-token",
+				GoName:   "authToken",
+			}
+		case "basic":
+			return &ir.AuthScheme{
+				Name:     name,
+				Type:     "basic",
+				FlagName: "auth-basic",
+				GoName:   "authBasic",
+			}
+		}
+	case "apiKey":
+		flagName := toKebabCase(scheme.Name)
+		return &ir.AuthScheme{
+			Name:       name,
+			Type:       "apiKey",
+			FlagName:   flagName,
+			GoName:     toCamelCase(scheme.Name),
+			HeaderName: scheme.Name,
+			In:         scheme.In,
+		}
+	}
+	return nil
 }
 
 func toPascalCase(s string) string {

@@ -7,6 +7,9 @@ info:
 servers:
   - url: https://api.petstore.example.com/v1
 
+security:
+  - bearerAuth: []
+
 paths:
   /pets:
     get:
@@ -127,6 +130,16 @@ paths:
                   $ref: "#/components/schemas/Owner"
 
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    apiKeyAuth:
+      type: apiKey
+      name: X-API-Key
+      in: header
+
   schemas:
     Pet:
       type: object

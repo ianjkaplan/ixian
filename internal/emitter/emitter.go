@@ -46,7 +46,7 @@ func Emit(plan *ir.Plan) ([]File, error) {
 	// Generate command files grouped by tag
 	groups := groupCommands(plan.Commands)
 	for group, cmds := range groups {
-		content, err := emitCommandGroup(plan, group, cmds)
+		content, err := emitCommandGroup(group, cmds)
 		if err != nil {
 			return nil, fmt.Errorf("emitting command group %s: %w", group, err)
 		}
@@ -136,13 +136,17 @@ import (
 type Client struct {
 	BaseURL    string
 	HTTPClient *http.Client
-	AuthToken  string
+	Headers    map[string]string
+{{- range .ClientConfig.AuthSchemes}}
+	{{.GoName}} string
+{{- end}}
 }
 
 func New(baseURL string) *Client {
 	return &Client{
 		BaseURL:    strings.TrimRight(baseURL, "/"),
 		HTTPClient: http.DefaultClient,
+		Headers:    make(map[string]string),
 	}
 }
 
@@ -169,8 +173,35 @@ func (c *Client) Do(method, path string, query url.Values, body any) ([]byte, er
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
 	}
-	if c.AuthToken != "" {
-		req.Header.Set("Authorization", "Bearer "+c.AuthToken)
+
+	// Apply auth
+{{- range .ClientConfig.AuthSchemes}}
+{{- if eq .Type "bearer"}}
+	if c.{{.GoName}} != "" {
+		req.Header.Set("Authorization", "Bearer "+c.{{.GoName}})
+	}
+{{- else if eq .Type "basic"}}
+	if c.{{.GoName}} != "" {
+		req.Header.Set("Authorization", "Basic "+c.{{.GoName}})
+	}
+{{- else if eq .Type "apiKey"}}
+{{- if eq .In "header"}}
+	if c.{{.GoName}} != "" {
+		req.Header.Set("{{.HeaderName}}", c.{{.GoName}})
+	}
+{{- else if eq .In "query"}}
+	if c.{{.GoName}} != "" {
+		q := req.URL.Query()
+		q.Set("{{.HeaderName}}", c.{{.GoName}})
+		req.URL.RawQuery = q.Encode()
+	}
+{{- end}}
+{{- end}}
+{{- end}}
+
+	// Apply custom headers
+	for k, v := range c.Headers {
+		req.Header.Set(k, v)
 	}
 
 	resp, err := c.HTTPClient.Do(req)
@@ -206,9 +237,11 @@ import (
 )
 
 var (
-	baseURL   string
-	authToken string
-	output    string
+	baseURL string
+	output  string
+{{- range .ClientConfig.AuthSchemes}}
+	{{.GoName}} string
+{{- end}}
 )
 
 var rootCmd = &cobra.Command{
@@ -225,8 +258,16 @@ func Execute() {
 
 func init() {
 	rootCmd.PersistentFlags().StringVar(&baseURL, "base-url", "{{.ClientConfig.BaseURL}}", "API base URL")
-	rootCmd.PersistentFlags().StringVar(&authToken, "auth-token", "", "Bearer auth token")
 	rootCmd.PersistentFlags().StringVarP(&output, "output", "o", "json", "Output format (json, raw)")
+{{- range .ClientConfig.AuthSchemes}}
+{{- if eq .Type "bearer"}}
+	rootCmd.PersistentFlags().StringVar(&{{.GoName}}, "{{.FlagName}}", "", "Bearer authentication token")
+{{- else if eq .Type "basic"}}
+	rootCmd.PersistentFlags().StringVar(&{{.GoName}}, "{{.FlagName}}", "", "Basic authentication credentials (base64)")
+{{- else if eq .Type "apiKey"}}
+	rootCmd.PersistentFlags().StringVar(&{{.GoName}}, "{{.FlagName}}", "", "API key (sent as {{.HeaderName}} {{.In}})")
+{{- end}}
+{{- end}}
 }
 `
 
@@ -319,7 +360,7 @@ func init() {
 }
 `
 
-func emitCommandGroup(plan *ir.Plan, group string, cmds []ir.GoCommand) ([]byte, error) {
+func emitCommandGroup(group string, cmds []ir.GoCommand) ([]byte, error) {
 	// Sort commands for deterministic output
 	sorted := make([]ir.GoCommand, len(cmds))
 	copy(sorted, cmds)

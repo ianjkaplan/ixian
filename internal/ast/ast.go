@@ -4,11 +4,12 @@ package ast
 
 // Spec is the top-level OpenAPI 3.x document.
 type Spec struct {
-	OpenAPI    string               `yaml:"openapi" json:"openapi"`
-	Info       Info                 `yaml:"info" json:"info"`
-	Servers    []Server             `yaml:"servers,omitempty" json:"servers,omitempty"`
-	Paths      map[string]*PathItem `yaml:"paths" json:"paths"`
-	Components *Components          `yaml:"components,omitempty" json:"components,omitempty"`
+	OpenAPI    string                `yaml:"openapi" json:"openapi"`
+	Info       Info                  `yaml:"info" json:"info"`
+	Servers    []Server              `yaml:"servers,omitempty" json:"servers,omitempty"`
+	Paths      map[string]*PathItem  `yaml:"paths" json:"paths"`
+	Components *Components           `yaml:"components,omitempty" json:"components,omitempty"`
+	Security   []SecurityRequirement `yaml:"security,omitempty" json:"security,omitempty"`
 }
 
 type Info struct {
@@ -31,14 +32,18 @@ type PathItem struct {
 }
 
 type Operation struct {
-	OperationID string              `yaml:"operationId" json:"operationId"`
-	Summary     string              `yaml:"summary,omitempty" json:"summary,omitempty"`
-	Description string              `yaml:"description,omitempty" json:"description,omitempty"`
-	Tags        []string            `yaml:"tags,omitempty" json:"tags,omitempty"`
-	Parameters  []Parameter         `yaml:"parameters,omitempty" json:"parameters,omitempty"`
-	RequestBody *RequestBody        `yaml:"requestBody,omitempty" json:"requestBody,omitempty"`
-	Responses   map[string]Response `yaml:"responses,omitempty" json:"responses,omitempty"`
+	OperationID string                `yaml:"operationId" json:"operationId"`
+	Summary     string                `yaml:"summary,omitempty" json:"summary,omitempty"`
+	Description string                `yaml:"description,omitempty" json:"description,omitempty"`
+	Tags        []string              `yaml:"tags,omitempty" json:"tags,omitempty"`
+	Parameters  []Parameter           `yaml:"parameters,omitempty" json:"parameters,omitempty"`
+	RequestBody *RequestBody          `yaml:"requestBody,omitempty" json:"requestBody,omitempty"`
+	Responses   map[string]Response   `yaml:"responses,omitempty" json:"responses,omitempty"`
+	Security    []SecurityRequirement `yaml:"security,omitempty" json:"security,omitempty"`
 }
+
+// SecurityRequirement maps security scheme names to their scopes.
+type SecurityRequirement map[string][]string
 
 type Parameter struct {
 	Name        string  `yaml:"name" json:"name"`
@@ -80,7 +85,18 @@ type Schema struct {
 }
 
 type Components struct {
-	Schemas map[string]*Schema `yaml:"schemas,omitempty" json:"schemas,omitempty"`
+	Schemas         map[string]*Schema         `yaml:"schemas,omitempty" json:"schemas,omitempty"`
+	SecuritySchemes map[string]*SecurityScheme `yaml:"securitySchemes,omitempty" json:"securitySchemes,omitempty"`
+}
+
+// SecurityScheme represents an OpenAPI security scheme definition.
+type SecurityScheme struct {
+	Type         string `yaml:"type" json:"type"`                         // apiKey, http, oauth2, openIdConnect
+	Scheme       string `yaml:"scheme,omitempty" json:"scheme,omitempty"` // bearer, basic (for type=http)
+	BearerFormat string `yaml:"bearerFormat,omitempty" json:"bearerFormat,omitempty"`
+	Name         string `yaml:"name,omitempty" json:"name,omitempty"` // header/query/cookie name (for type=apiKey)
+	In           string `yaml:"in,omitempty" json:"in,omitempty"`     // header, query, cookie (for type=apiKey)
+	Description  string `yaml:"description,omitempty" json:"description,omitempty"`
 }
 
 // IsRef returns true if this schema is a $ref pointer.

@@ -114,6 +114,53 @@ func TestPlanPetstore(t *testing.T) {
 	}
 }
 
+func TestPlanAuthSchemes(t *testing.T) {
+	spec, err := parser.Parse(testdataPath("petstore.yaml"))
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	bound, err := binder.Bind(spec)
+	if err != nil {
+		t.Fatalf("bind: %v", err)
+	}
+
+	plan := Plan(bound)
+
+	if len(plan.ClientConfig.AuthSchemes) != 2 {
+		t.Fatalf("auth schemes count = %d, want 2", len(plan.ClientConfig.AuthSchemes))
+	}
+
+	schemeByName := make(map[string]ir.AuthScheme)
+	for _, s := range plan.ClientConfig.AuthSchemes {
+		schemeByName[s.Name] = s
+	}
+
+	bearer, ok := schemeByName["bearerAuth"]
+	if !ok {
+		t.Fatal("missing bearerAuth scheme")
+	}
+	if bearer.Type != "bearer" {
+		t.Errorf("bearerAuth type = %q, want %q", bearer.Type, "bearer")
+	}
+	if bearer.FlagName != "auth-token" {
+		t.Errorf("bearerAuth flagName = %q, want %q", bearer.FlagName, "auth-token")
+	}
+
+	apiKey, ok := schemeByName["apiKeyAuth"]
+	if !ok {
+		t.Fatal("missing apiKeyAuth scheme")
+	}
+	if apiKey.Type != "apiKey" {
+		t.Errorf("apiKeyAuth type = %q, want %q", apiKey.Type, "apiKey")
+	}
+	if apiKey.HeaderName != "X-API-Key" {
+		t.Errorf("apiKeyAuth headerName = %q, want %q", apiKey.HeaderName, "X-API-Key")
+	}
+	if apiKey.In != "header" {
+		t.Errorf("apiKeyAuth in = %q, want %q", apiKey.In, "header")
+	}
+}
+
 func TestTypeMapping(t *testing.T) {
 	spec, err := parser.ParseBytes([]byte(`
 openapi: "3.0.3"

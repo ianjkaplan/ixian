@@ -64,5 +64,17 @@ type GoFlag struct {
 
 // ClientConfig holds config for the generated HTTP client.
 type ClientConfig struct {
-	BaseURL string
+	BaseURL     string
+	AuthSchemes []AuthScheme
+}
+
+// AuthScheme represents a resolved auth mechanism for the generated CLI.
+type AuthScheme struct {
+	Name     string // scheme name from the spec (e.g., "bearerAuth")
+	Type     string // "bearer", "basic", "apiKey"
+	FlagName string // CLI flag name (e.g., "auth-token", "api-key")
+	GoName   string // Go variable name (e.g., "authToken", "apiKey")
+	// apiKey-specific
+	HeaderName string // header name to send (e.g., "X-API-Key")
+	In         string // "header" or "query"
 }
