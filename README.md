@@ -78,3 +78,64 @@ internal/
   formatter/         # gofmt + file writer
 testdata/            # Golden file specs for testing
 ```
+
+## Architecture
+
+```
+                    ┌──────────────┐
+                    │  CLI Entry   │
+                    │  (Cobra)     │
+                    └──────┬───────┘
+                           │
+                           ▼
+                    ┌──────────────┐
+                    │   Parser     │
+                    │              │
+                    │ YAML/JSON →  │
+                    │ Raw AST      │
+                    └──────┬───────┘
+                           │
+                           ▼
+                    ┌──────────────┐
+                    │   Binder     │
+                    │              │
+                    │ Resolve $ref │
+                    │ Symbol Table │
+                    │ Dep Graph    │
+                    └──────┬───────┘
+                           │
+                           ▼
+                    ┌──────────────┐
+                    │   Checker    │
+                    │              │
+                    │ Validate     │
+                    │ Diagnostics  │
+                    └──────┬───────┘
+                           │
+                           ▼
+                    ┌──────────────┐
+                    │   Planner    │
+                    │              │
+                    │ Type mapping │
+                    │ Cmd grouping │
+                    │ Flag strategy│
+                    │ → Codegen IR │
+                    └──────┬───────┘
+                           │
+                           ▼
+                    ┌──────────────┐
+                    │   Emitter    │
+                    │              │
+                    │ IR → .go     │
+                    │ (templates)  │
+                    └──────┬───────┘
+                           │
+                           ▼
+                    ┌──────────────┐
+                    │  Formatter   │
+                    │              │
+                    │ gofmt + write│
+                    └──────────────┘
+```
+
+Each stage has a single input type and single output type. No stage reaches back to a previous stage's output. The planner owns all decisions (type mapping, command structure, flag names) — the emitter is a dumb printer.
