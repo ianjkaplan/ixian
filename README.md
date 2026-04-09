@@ -2,6 +2,8 @@
 
 OpenAPI 3.x to Go CLI code generator. Reads an OpenAPI spec and generates a fully functional Go CLI application using Cobra.
 
+> Ixian refers to the planet machine makers in the Dune universe
+
 ## Quick Start
 
 ```bash
@@ -23,10 +25,10 @@ make test
 
 Flags:
 
-| Flag | Short | Default | Description |
-|------|-------|---------|-------------|
-| `--spec` | `-s` | (required) | Path to OpenAPI 3.x spec (YAML or JSON) |
-| `--output` | `-o` | `./output` | Output directory for generated code |
+| Flag       | Short | Default    | Description                             |
+| ---------- | ----- | ---------- | --------------------------------------- |
+| `--spec`   | `-s`  | (required) | Path to OpenAPI 3.x spec (YAML or JSON) |
+| `--output` | `-o`  | `./output` | Output directory for generated code     |
 
 ## Pipeline
 
@@ -43,12 +45,12 @@ The generator runs a six-stage pipeline:
 
 Ixian reads `securitySchemes` from the OpenAPI spec and generates corresponding CLI flags and client logic.
 
-| OpenAPI Scheme | Generated Flag | Behavior |
-|----------------|----------------|----------|
-| `type: http, scheme: bearer` | `--auth-token` | Sends `Authorization: Bearer <token>` header |
-| `type: http, scheme: basic` | `--auth-basic` | Sends `Authorization: Basic <credentials>` header |
-| `type: apiKey, in: header` | `--<key-name>` | Sends the API key as the specified header |
-| `type: apiKey, in: query` | `--<key-name>` | Appends the API key as a query parameter |
+| OpenAPI Scheme               | Generated Flag | Behavior                                          |
+| ---------------------------- | -------------- | ------------------------------------------------- |
+| `type: http, scheme: bearer` | `--auth-token` | Sends `Authorization: Bearer <token>` header      |
+| `type: http, scheme: basic`  | `--auth-basic` | Sends `Authorization: Basic <credentials>` header |
+| `type: apiKey, in: header`   | `--<key-name>` | Sends the API key as the specified header         |
+| `type: apiKey, in: query`    | `--<key-name>` | Appends the API key as a query parameter          |
 
 Example:
 
