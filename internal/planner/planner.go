@@ -3,6 +3,7 @@
 package planner
 
 import (
+	"sort"
 	"strings"
 	"unicode"
 
@@ -31,30 +32,53 @@ func (p *planner) plan() *ir.Plan {
 		plan.ClientConfig.BaseURL = p.bound.Spec.Servers[0].URL
 	}
 
-	// Map security schemes
+	// Map security schemes (sorted for deterministic output)
 	if p.bound.Spec.Components != nil {
-		for name, scheme := range p.bound.Spec.Components.SecuritySchemes {
-			if auth := p.planAuth(name, scheme); auth != nil {
+		schemeNames := make([]string, 0, len(p.bound.Spec.Components.SecuritySchemes))
+		for name := range p.bound.Spec.Components.SecuritySchemes {
+			schemeNames = append(schemeNames, name)
+		}
+		sort.Strings(schemeNames)
+		for _, name := range schemeNames {
+			if auth := p.planAuth(name, p.bound.Spec.Components.SecuritySchemes[name]); auth != nil {
 				plan.ClientConfig.AuthSchemes = append(plan.ClientConfig.AuthSchemes, *auth)
 			}
 		}
 	}
 
-	// Generate types from schemas
-	for name, schema := range p.bound.SymbolTable {
-		goType := p.planType(name, schema)
+	// Generate types from schemas (sorted for deterministic output)
+	typeNames := make([]string, 0, len(p.bound.SymbolTable))
+	for name := range p.bound.SymbolTable {
+		typeNames = append(typeNames, name)
+	}
+	sort.Strings(typeNames)
+	for _, name := range typeNames {
+		goType := p.planType(name, p.bound.SymbolTable[name])
 		plan.Types = append(plan.Types, goType)
 	}
 
-	// Generate commands from operations
-	for path, pi := range p.bound.Spec.Paths {
-		for method, op := range map[string]*ast.Operation{
-			"GET": pi.Get, "POST": pi.Post, "PUT": pi.Put, "DELETE": pi.Delete, "PATCH": pi.Patch,
+	// Generate commands from operations (sorted by path for deterministic output)
+	paths := make([]string, 0, len(p.bound.Spec.Paths))
+	for path := range p.bound.Spec.Paths {
+		paths = append(paths, path)
+	}
+	sort.Strings(paths)
+	for _, path := range paths {
+		pi := p.bound.Spec.Paths[path]
+		for _, pair := range []struct {
+			method string
+			op     *ast.Operation
+		}{
+			{"DELETE", pi.Delete},
+			{"GET", pi.Get},
+			{"PATCH", pi.Patch},
+			{"POST", pi.Post},
+			{"PUT", pi.Put},
 		} {
-			if op == nil {
+			if pair.op == nil {
 				continue
 			}
-			cmd := p.planCommand(path, method, op)
+			cmd := p.planCommand(path, pair.method, pair.op)
 			plan.Commands = append(plan.Commands, cmd)
 		}
 	}
@@ -84,7 +108,14 @@ func (p *planner) planType(name string, s *ast.Schema) ir.GoType {
 		requiredSet[r] = true
 	}
 
-	for propName, prop := range s.Properties {
+	propNames := make([]string, 0, len(s.Properties))
+	for name := range s.Properties {
+		propNames = append(propNames, name)
+	}
+	sort.Strings(propNames)
+
+	for _, propName := range propNames {
+		prop := s.Properties[propName]
 		field := ir.GoField{
 			Name:     toPascalCase(propName),
 			JSONName: propName,
@@ -133,9 +164,15 @@ func (p *planner) planCommand(path, method string, op *ast.Operation) ir.GoComma
 		}
 	}
 
-	// Map primary success response
-	for code, resp := range op.Responses {
+	// Map primary success response (sorted for deterministic output)
+	respCodes := make([]string, 0, len(op.Responses))
+	for code := range op.Responses {
+		respCodes = append(respCodes, code)
+	}
+	sort.Strings(respCodes)
+	for _, code := range respCodes {
 		if strings.HasPrefix(code, "2") {
+			resp := op.Responses[code]
 			if mt, ok := resp.Content["application/json"]; ok && mt.Schema != nil {
 				cmd.ResponseType = p.mapType(mt.Schema)
 			}
