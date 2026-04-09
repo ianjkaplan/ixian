@@ -13,6 +13,7 @@ func testdataPath(name string) string {
 }
 
 func TestCheckPetstore(t *testing.T) {
+	t.Parallel()
 	spec, err := parser.Parse(testdataPath("petstore.yaml"))
 	if err != nil {
 		t.Fatalf("parse: %v", err)
@@ -36,6 +37,7 @@ func TestCheckPetstore(t *testing.T) {
 }
 
 func TestCheckDuplicateOperationID(t *testing.T) {
+	t.Parallel()
 	spec, err := parser.ParseBytes([]byte(`
 openapi: "3.0.3"
 info:
@@ -80,6 +82,7 @@ paths:
 }
 
 func TestCheckMissingOperationID(t *testing.T) {
+	t.Parallel()
 	spec, err := parser.ParseBytes([]byte(`
 openapi: "3.0.3"
 info:
@@ -107,6 +110,7 @@ paths:
 }
 
 func TestCheckMissingPathParam(t *testing.T) {
+	t.Parallel()
 	spec, err := parser.ParseBytes([]byte(`
 openapi: "3.0.3"
 info:
@@ -135,6 +139,7 @@ paths:
 }
 
 func TestCheckRequiredFieldNotInProperties(t *testing.T) {
+	t.Parallel()
 	spec, err := parser.ParseBytes([]byte(`
 openapi: "3.0.3"
 info:

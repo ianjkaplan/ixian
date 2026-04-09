@@ -6,9 +6,11 @@ type CreatePetRequest struct {
 	Tag  string `json:"tag,omitempty"`
 }
 
-// Error
+// Error — Error response
 type Error struct {
-	Code    int32  `json:"code"`
+	// Error code
+	Code int32 `json:"code"`
+	// Human-readable error message
 	Message string `json:"message"`
 }
 
@@ -19,11 +21,14 @@ type Owner struct {
 	Name  string `json:"name"`
 }
 
-// Pet
+// Pet — A pet in the store
 type Pet struct {
-	Id     string `json:"id"`
+	// Unique identifier for the pet
+	Id string `json:"id"`
+	// Name of the pet
 	Name   string `json:"name"`
 	Owner  any    `json:"owner,omitempty"`
 	Status string `json:"status,omitempty"`
-	Tag    string `json:"tag,omitempty"`
+	// Optional tag for categorization
+	Tag string `json:"tag,omitempty"`
 }

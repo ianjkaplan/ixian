@@ -81,6 +81,22 @@ var funcMap = template.FuncMap{
 	},
 	"hasPrefix": strings.HasPrefix,
 	"join":      strings.Join,
+	"cmdLong": func(cmd ir.GoCommand) string {
+		var parts []string
+		if cmd.Description != "" {
+			parts = append(parts, cmd.Description)
+		}
+		if cmd.BodyDescription != "" {
+			parts = append(parts, "Request body: "+cmd.BodyDescription)
+		}
+		if len(cmd.ResponseDescriptions) > 0 {
+			parts = append(parts, "Responses:")
+			for _, rd := range cmd.ResponseDescriptions {
+				parts = append(parts, "  "+rd.StatusCode+": "+rd.Description)
+			}
+		}
+		return strings.Join(parts, "\n\n")
+	},
 }
 
 func execTemplate(name, tmpl string, data any) ([]byte, error) {
@@ -101,6 +117,9 @@ const typesTmpl = `package types
 // {{.Name}} {{- if .Description}} — {{.Description}}{{end}}
 type {{.Name}} struct {
 {{- range .Fields}}
+	{{- if .Comment}}
+	// {{.Comment}}
+	{{- end}}
 	{{.Name}} {{.Type}} ` + "`" + `json:"{{.JSONName}}{{if not .Required}},omitempty{{end}}"` + "`" + `
 {{- end}}
 }
@@ -252,7 +271,15 @@ var (
 
 var rootCmd = &cobra.Command{
 	Use:   "{{.PackageName}}",
-	Short: "CLI for {{.PackageName}} API",
+	Short: "{{if .APITitle}}{{.APITitle}} CLI{{else}}CLI for {{.PackageName}} API{{end}}",
+{{- if .APIDescription}}
+	Long:  ` + "`" + `{{.APIDescription}}{{if .ClientConfig.ServerDescriptions}}
+
+Servers:
+{{- range .ClientConfig.ServerDescriptions}}
+  {{.URL}}{{if .Description}} — {{.Description}}{{end}}
+{{- end}}{{end}}` + "`" + `,
+{{- end}}
 }
 
 func Execute() {
@@ -320,6 +347,10 @@ func init() {
 		cmd := &cobra.Command{
 			Use:   "{{.Name}}",
 			Short: "{{.Summary}}",
+{{- $long := cmdLong .}}
+{{- if $long}}
+			Long:  ` + "`" + `{{$long}}` + "`" + `,
+{{- end}}
 			RunE: func(cmd *cobra.Command, args []string) error {
 				{{- if .Flags}}
 				query := url.Values{}

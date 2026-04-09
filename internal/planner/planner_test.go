@@ -14,6 +14,7 @@ func testdataPath(name string) string {
 }
 
 func TestPlanPetstore(t *testing.T) {
+	t.Parallel()
 	spec, err := parser.Parse(testdataPath("petstore.yaml"))
 	if err != nil {
 		t.Fatalf("parse: %v", err)
@@ -25,9 +26,28 @@ func TestPlanPetstore(t *testing.T) {
 
 	plan := Plan(bound)
 
+	// Check API title and description
+	if plan.APITitle != "Petstore" {
+		t.Errorf("APITitle = %q, want %q", plan.APITitle, "Petstore")
+	}
+	if plan.APIDescription != "A simple pet store API for testing Ixian code generation." {
+		t.Errorf("APIDescription = %q, want petstore description", plan.APIDescription)
+	}
+	if plan.PackageName != "petstore" {
+		t.Errorf("PackageName = %q, want %q", plan.PackageName, "petstore")
+	}
+
 	// Check base URL
 	if plan.ClientConfig.BaseURL != "https://api.petstore.example.com/v1" {
 		t.Errorf("baseURL = %q, want petstore URL", plan.ClientConfig.BaseURL)
+	}
+
+	// Check server descriptions
+	if len(plan.ClientConfig.ServerDescriptions) != 1 {
+		t.Fatalf("server descriptions = %d, want 1", len(plan.ClientConfig.ServerDescriptions))
+	}
+	if plan.ClientConfig.ServerDescriptions[0].Description != "Production server" {
+		t.Errorf("server description = %q, want %q", plan.ClientConfig.ServerDescriptions[0].Description, "Production server")
 	}
 
 	// Check types were generated
@@ -49,6 +69,18 @@ func TestPlanPetstore(t *testing.T) {
 	}
 	if len(pet.Fields) != 5 {
 		t.Errorf("Pet fields = %d, want 5", len(pet.Fields))
+	}
+
+	// Check field comments are populated
+	fieldByName := make(map[string]ir.GoField)
+	for _, f := range pet.Fields {
+		fieldByName[f.JSONName] = f
+	}
+	if fieldByName["id"].Comment != "Unique identifier for the pet" {
+		t.Errorf("Pet.id comment = %q, want description", fieldByName["id"].Comment)
+	}
+	if fieldByName["name"].Comment != "Name of the pet" {
+		t.Errorf("Pet.name comment = %q, want description", fieldByName["name"].Comment)
 	}
 
 	errType, ok := typeByName["Error"]
@@ -83,12 +115,32 @@ func TestPlanPetstore(t *testing.T) {
 		t.Errorf("listPets flags = %d, want 2", len(listPets.Flags))
 	}
 
+	// Check operation description
+	if listPets.Description != "Returns all pets in the store, optionally filtered by status." {
+		t.Errorf("listPets description = %q, want operation description", listPets.Description)
+	}
+
+	// Check parameter descriptions
+	if listPets.Flags[0].Description != "Maximum number of pets to return" {
+		t.Errorf("listPets limit flag description = %q, want param description", listPets.Flags[0].Description)
+	}
+
 	createPet, ok := cmdByOpID["createPet"]
 	if !ok {
 		t.Fatal("missing createPet command")
 	}
 	if createPet.BodyType != "CreatePetRequest" {
 		t.Errorf("createPet bodyType = %q, want %q", createPet.BodyType, "CreatePetRequest")
+	}
+
+	// Check request body description
+	if createPet.BodyDescription != "The pet to create" {
+		t.Errorf("createPet bodyDescription = %q, want %q", createPet.BodyDescription, "The pet to create")
+	}
+
+	// Check response descriptions
+	if len(createPet.ResponseDescriptions) != 2 {
+		t.Errorf("createPet response descriptions = %d, want 2", len(createPet.ResponseDescriptions))
 	}
 
 	getPet, ok := cmdByOpID["getPet"]
@@ -115,6 +167,7 @@ func TestPlanPetstore(t *testing.T) {
 }
 
 func TestPlanAuthSchemes(t *testing.T) {
+	t.Parallel()
 	spec, err := parser.Parse(testdataPath("petstore.yaml"))
 	if err != nil {
 		t.Fatalf("parse: %v", err)
@@ -162,6 +215,7 @@ func TestPlanAuthSchemes(t *testing.T) {
 }
 
 func TestTypeMapping(t *testing.T) {
+	t.Parallel()
 	spec, err := parser.ParseBytes([]byte(`
 openapi: "3.0.3"
 info:
@@ -242,6 +296,7 @@ components:
 }
 
 func TestCaseConversions(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		input  string
 		pascal string
@@ -254,14 +309,17 @@ func TestCaseConversions(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		if got := toPascalCase(tt.input); got != tt.pascal {
-			t.Errorf("toPascalCase(%q) = %q, want %q", tt.input, got, tt.pascal)
-		}
-		if got := toCamelCase(tt.input); got != tt.camel {
-			t.Errorf("toCamelCase(%q) = %q, want %q", tt.input, got, tt.camel)
-		}
-		if got := toKebabCase(tt.input); got != tt.kebab {
-			t.Errorf("toKebabCase(%q) = %q, want %q", tt.input, got, tt.kebab)
-		}
+		t.Run(tt.input, func(t *testing.T) {
+			t.Parallel()
+			if got := toPascalCase(tt.input); got != tt.pascal {
+				t.Errorf("toPascalCase(%q) = %q, want %q", tt.input, got, tt.pascal)
+			}
+			if got := toCamelCase(tt.input); got != tt.camel {
+				t.Errorf("toCamelCase(%q) = %q, want %q", tt.input, got, tt.camel)
+			}
+			if got := toKebabCase(tt.input); got != tt.kebab {
+				t.Errorf("toKebabCase(%q) = %q, want %q", tt.input, got, tt.kebab)
+			}
+		})
 	}
 }

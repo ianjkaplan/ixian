@@ -4,10 +4,12 @@ package ir
 
 // Plan is the top-level codegen IR.
 type Plan struct {
-	PackageName  string
-	Types        []GoType
-	Commands     []GoCommand
-	ClientConfig ClientConfig
+	PackageName    string
+	APITitle       string // from info.title
+	APIDescription string // from info.description
+	Types          []GoType
+	Commands       []GoCommand
+	ClientConfig   ClientConfig
 }
 
 // GoType represents a generated Go type (struct, enum, or alias).
@@ -47,8 +49,10 @@ type GoCommand struct {
 	Summary      string
 	Description  string
 	Flags        []GoFlag
-	BodyType     string // Go type for request body, empty if none
-	ResponseType string // Go type for primary success response
+	BodyType         string // Go type for request body, empty if none
+	BodyDescription  string // description of the request body
+	ResponseType     string // Go type for primary success response
+	ResponseDescriptions []ResponseDescription // descriptions of each response
 }
 
 // GoFlag represents a single CLI flag.
@@ -62,10 +66,23 @@ type GoFlag struct {
 	In           string // query, path, header
 }
 
+// ResponseDescription pairs an HTTP status code with its description.
+type ResponseDescription struct {
+	StatusCode  string
+	Description string
+}
+
+// ServerDescription pairs a URL with its description.
+type ServerDescription struct {
+	URL         string
+	Description string
+}
+
 // ClientConfig holds config for the generated HTTP client.
 type ClientConfig struct {
-	BaseURL     string
-	AuthSchemes []AuthScheme
+	BaseURL            string
+	ServerDescriptions []ServerDescription
+	AuthSchemes        []AuthScheme
 }
 
 // AuthScheme represents a resolved auth mechanism for the generated CLI.

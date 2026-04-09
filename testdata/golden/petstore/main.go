@@ -1,6 +1,6 @@
 package main
 
-import "generated/cmd"
+import "petstore/cmd"
 
 func main() {
 	cmd.Execute()

@@ -16,6 +16,7 @@ func testdataPath(name string) string {
 }
 
 func TestFormatPetstore(t *testing.T) {
+	t.Parallel()
 	spec, err := parser.Parse(testdataPath("petstore.yaml"))
 	if err != nil {
 		t.Fatalf("parse: %v", err)
@@ -48,6 +49,7 @@ func TestFormatPetstore(t *testing.T) {
 }
 
 func TestWriteFiles(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 
 	files := []emitter.File{
@@ -73,6 +75,7 @@ func TestWriteFiles(t *testing.T) {
 }
 
 func TestFormatInvalidGo(t *testing.T) {
+	t.Parallel()
 	files := []emitter.File{
 		{Name: "bad.go", Content: []byte("this is not valid go code {{{")},
 	}

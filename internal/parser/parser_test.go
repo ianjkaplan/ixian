@@ -10,6 +10,7 @@ func testdataPath(name string) string {
 }
 
 func TestParsePetstoreYAML(t *testing.T) {
+	t.Parallel()
 	spec, err := Parse(testdataPath("petstore.yaml"))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -103,6 +104,7 @@ func TestParsePetstoreYAML(t *testing.T) {
 }
 
 func TestParseSecuritySchemes(t *testing.T) {
+	t.Parallel()
 	spec, err := Parse(testdataPath("petstore.yaml"))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -154,6 +156,7 @@ func TestParseSecuritySchemes(t *testing.T) {
 }
 
 func TestParseBytesJSON(t *testing.T) {
+	t.Parallel()
 	jsonSpec := []byte(`{
 		"openapi": "3.0.3",
 		"info": {"title": "Test", "version": "1.0.0"},
@@ -170,6 +173,7 @@ func TestParseBytesJSON(t *testing.T) {
 }
 
 func TestParseMissingFields(t *testing.T) {
+	t.Parallel()
 	_, err := ParseBytes([]byte(`{}`), ".json")
 	if err == nil {
 		t.Error("expected error for missing openapi field")
@@ -182,6 +186,7 @@ func TestParseMissingFields(t *testing.T) {
 }
 
 func TestParseInvalidYAML(t *testing.T) {
+	t.Parallel()
 	_, err := ParseBytes([]byte(`{invalid`), ".yaml")
 	if err == nil {
 		t.Error("expected error for invalid YAML")
@@ -189,6 +194,7 @@ func TestParseInvalidYAML(t *testing.T) {
 }
 
 func TestParseFileNotFound(t *testing.T) {
+	t.Parallel()
 	_, err := Parse("/nonexistent/file.yaml")
 	if err == nil {
 		t.Error("expected error for missing file")

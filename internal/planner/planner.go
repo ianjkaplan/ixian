@@ -24,12 +24,23 @@ type planner struct {
 
 func (p *planner) plan() *ir.Plan {
 	plan := &ir.Plan{
-		PackageName: "generated",
+		PackageName:    toKebabCase(p.bound.Spec.Info.Title),
+		APITitle:       p.bound.Spec.Info.Title,
+		APIDescription: p.bound.Spec.Info.Description,
+	}
+	if plan.PackageName == "" {
+		plan.PackageName = "generated"
 	}
 
-	// Map server URL
+	// Map server URL and descriptions
 	if len(p.bound.Spec.Servers) > 0 {
 		plan.ClientConfig.BaseURL = p.bound.Spec.Servers[0].URL
+		for _, srv := range p.bound.Spec.Servers {
+			plan.ClientConfig.ServerDescriptions = append(plan.ClientConfig.ServerDescriptions, ir.ServerDescription{
+				URL:         srv.URL,
+				Description: srv.Description,
+			})
+		}
 	}
 
 	// Map security schemes (sorted for deterministic output)
@@ -121,6 +132,7 @@ func (p *planner) planType(name string, s *ast.Schema) ir.GoType {
 			JSONName: propName,
 			Type:     p.mapType(prop),
 			Required: requiredSet[propName],
+			Comment:  prop.Description,
 		}
 		gt.Fields = append(gt.Fields, field)
 	}
@@ -159,24 +171,28 @@ func (p *planner) planCommand(path, method string, op *ast.Operation) ir.GoComma
 
 	// Map request body
 	if op.RequestBody != nil {
+		cmd.BodyDescription = op.RequestBody.Description
 		if mt, ok := op.RequestBody.Content["application/json"]; ok && mt.Schema != nil {
 			cmd.BodyType = p.schemaToTypeName(mt.Schema)
 		}
 	}
 
-	// Map primary success response (sorted for deterministic output)
+	// Map responses (sorted for deterministic output)
 	respCodes := make([]string, 0, len(op.Responses))
 	for code := range op.Responses {
 		respCodes = append(respCodes, code)
 	}
 	sort.Strings(respCodes)
 	for _, code := range respCodes {
-		if strings.HasPrefix(code, "2") {
-			resp := op.Responses[code]
+		resp := op.Responses[code]
+		cmd.ResponseDescriptions = append(cmd.ResponseDescriptions, ir.ResponseDescription{
+			StatusCode:  code,
+			Description: resp.Description,
+		})
+		if strings.HasPrefix(code, "2") && cmd.ResponseType == "" {
 			if mt, ok := resp.Content["application/json"]; ok && mt.Schema != nil {
 				cmd.ResponseType = p.mapType(mt.Schema)
 			}
-			break
 		}
 	}
 

@@ -33,6 +33,9 @@ func init() {
 		cmd := &cobra.Command{
 			Use:   "list-owners",
 			Short: "List all owners",
+			Long: `Responses:
+
+  200: A list of owners`,
 			RunE: func(cmd *cobra.Command, args []string) error {
 				return nil
 			},

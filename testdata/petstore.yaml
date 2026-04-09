@@ -6,6 +6,7 @@ info:
 
 servers:
   - url: https://api.petstore.example.com/v1
+    description: Production server
 
 security:
   - bearerAuth: []
@@ -15,11 +16,13 @@ paths:
     get:
       operationId: listPets
       summary: List all pets
+      description: Returns all pets in the store, optionally filtered by status.
       tags:
         - pets
       parameters:
         - name: limit
           in: query
+          description: Maximum number of pets to return
           required: false
           schema:
             type: integer
@@ -45,10 +48,12 @@ paths:
     post:
       operationId: createPet
       summary: Create a pet
+      description: Creates a new pet in the store.
       tags:
         - pets
       requestBody:
         required: true
+        description: The pet to create
         content:
           application/json:
             schema:
@@ -71,12 +76,14 @@ paths:
     get:
       operationId: getPet
       summary: Get a pet by ID
+      description: Returns a single pet by its unique identifier.
       tags:
         - pets
       parameters:
         - name: petId
           in: path
           required: true
+          description: The ID of the pet to retrieve
           schema:
             type: string
       responses:
@@ -143,16 +150,20 @@ components:
   schemas:
     Pet:
       type: object
+      description: A pet in the store
       required:
         - id
         - name
       properties:
         id:
           type: string
+          description: Unique identifier for the pet
         name:
           type: string
+          description: Name of the pet
         tag:
           type: string
+          description: Optional tag for categorization
         status:
           type: string
           enum:
@@ -188,6 +199,7 @@ components:
 
     Error:
       type: object
+      description: Error response
       required:
         - code
         - message
@@ -195,5 +207,7 @@ components:
         code:
           type: integer
           format: int32
+          description: Error code
         message:
           type: string
+          description: Human-readable error message

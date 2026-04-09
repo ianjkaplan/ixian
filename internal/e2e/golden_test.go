@@ -52,6 +52,7 @@ func runPipeline(t *testing.T, specPath string) []emitter.File {
 }
 
 func TestGoldenPetstore(t *testing.T) {
+	t.Parallel()
 	files := runPipeline(t, testdataPath("petstore.yaml"))
 	dir := goldenDir("petstore")
 

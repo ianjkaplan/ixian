@@ -12,6 +12,7 @@ func testdataPath(name string) string {
 }
 
 func TestBindPetstore(t *testing.T) {
+	t.Parallel()
 	spec, err := parser.Parse(testdataPath("petstore.yaml"))
 	if err != nil {
 		t.Fatalf("parse: %v", err)
@@ -83,6 +84,7 @@ func TestBindPetstore(t *testing.T) {
 }
 
 func TestBindUnresolvedRef(t *testing.T) {
+	t.Parallel()
 	spec, err := parser.ParseBytes([]byte(`
 openapi: "3.0.3"
 info:

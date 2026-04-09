@@ -16,8 +16,12 @@ var (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "generated",
-	Short: "CLI for generated API",
+	Use:   "petstore",
+	Short: "Petstore CLI",
+	Long: `A simple pet store API for testing Ixian code generation.
+
+Servers:
+  https://api.petstore.example.com/v1 — Production server`,
 }
 
 func Execute() {

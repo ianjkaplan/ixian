@@ -15,6 +15,7 @@ func testdataPath(name string) string {
 }
 
 func TestEmitPetstore(t *testing.T) {
+	t.Parallel()
 	spec, err := parser.Parse(testdataPath("petstore.yaml"))
 	if err != nil {
 		t.Fatalf("parse: %v", err)
@@ -86,6 +87,17 @@ func TestEmitPetstore(t *testing.T) {
 		t.Error("root.go missing default base URL")
 	}
 
+	// Check API title and description in root command
+	if !strings.Contains(rootContent, "Petstore CLI") {
+		t.Error("root.go missing API title in Short")
+	}
+	if !strings.Contains(rootContent, "A simple pet store API") {
+		t.Error("root.go missing API description in Long")
+	}
+	if !strings.Contains(rootContent, "Production server") {
+		t.Error("root.go missing server description")
+	}
+
 	// Check custom headers support in root.go
 	if !strings.Contains(rootContent, `"header"`) {
 		t.Error("root.go missing --header flag")
@@ -124,6 +136,14 @@ func TestEmitPetstore(t *testing.T) {
 		t.Error("root.go missing bearer flag description")
 	}
 
+	// Check types.go has field comments
+	if !strings.Contains(typesContent, "// Unique identifier for the pet") {
+		t.Error("types.go missing field comment for id")
+	}
+	if !strings.Contains(typesContent, "// Error code") {
+		t.Error("types.go missing field comment for error code")
+	}
+
 	// Check pets.go content
 	petsContent := fileMap["cmd/pets.go"]
 	if !strings.Contains(petsContent, "petsCmd") {
@@ -136,6 +156,25 @@ func TestEmitPetstore(t *testing.T) {
 		t.Error("pets.go missing create-pet command")
 	}
 
+	// Check operation descriptions appear as Long help
+	if !strings.Contains(petsContent, "Returns all pets in the store") {
+		t.Error("pets.go missing operation description in Long")
+	}
+	if !strings.Contains(petsContent, "The pet to create") {
+		t.Error("pets.go missing request body description")
+	}
+	if !strings.Contains(petsContent, "201: The created pet") {
+		t.Error("pets.go missing response description")
+	}
+
+	// Check parameter descriptions as flag help
+	if !strings.Contains(petsContent, "Maximum number of pets to return") {
+		t.Error("pets.go missing parameter description for limit flag")
+	}
+	if !strings.Contains(petsContent, "The ID of the pet to retrieve") {
+		t.Error("pets.go missing parameter description for petId flag")
+	}
+
 	// Check owners.go content
 	ownersContent := fileMap["cmd/owners.go"]
 	if !strings.Contains(ownersContent, "ownersCmd") {
@@ -144,6 +183,7 @@ func TestEmitPetstore(t *testing.T) {
 }
 
 func TestEmitDeterministic(t *testing.T) {
+	t.Parallel()
 	spec, err := parser.Parse(testdataPath("petstore.yaml"))
 	if err != nil {
 		t.Fatalf("parse: %v", err)

@@ -4,13 +4,13 @@
 build:
 	go build -o ixian ./cmd/ixian/
 
-# Run all tests
+# Run all tests (parallel with race detector)
 test:
-	go test ./cmd/... ./internal/... -v
+	go test ./cmd/... ./internal/... -race -parallel 4 -v
 
-# Run tests with race detector
-test-race:
-	go test ./cmd/... ./internal/... -race -v
+# Run tests quickly without race detector
+test-fast:
+	go test ./cmd/... ./internal/... -parallel 4 -v
 
 # Check formatting
 fmt:

@@ -33,6 +33,15 @@ func init() {
 		cmd := &cobra.Command{
 			Use:   "create-pet",
 			Short: "Create a pet",
+			Long: `Creates a new pet in the store.
+
+Request body: The pet to create
+
+Responses:
+
+  201: The created pet
+
+  400: Invalid input`,
 			RunE: func(cmd *cobra.Command, args []string) error {
 				return nil
 			},
@@ -48,6 +57,11 @@ func init() {
 		cmd := &cobra.Command{
 			Use:   "delete-pet",
 			Short: "Delete a pet",
+			Long: `Responses:
+
+  204: Pet deleted
+
+  404: Pet not found`,
 			RunE: func(cmd *cobra.Command, args []string) error {
 				query := url.Values{}
 				path := "/pets/{petId}"
@@ -74,6 +88,13 @@ func init() {
 		cmd := &cobra.Command{
 			Use:   "get-pet",
 			Short: "Get a pet by ID",
+			Long: `Returns a single pet by its unique identifier.
+
+Responses:
+
+  200: A single pet
+
+  404: Pet not found`,
 			RunE: func(cmd *cobra.Command, args []string) error {
 				query := url.Values{}
 				path := "/pets/{petId}"
@@ -86,7 +107,7 @@ func init() {
 			},
 		}
 
-		cmd.Flags().StringVar(&flagpetId, "pet-id", "", "")
+		cmd.Flags().StringVar(&flagpetId, "pet-id", "", "The ID of the pet to retrieve")
 
 		_ = cmd.MarkFlagRequired("pet-id")
 
@@ -101,6 +122,11 @@ func init() {
 		cmd := &cobra.Command{
 			Use:   "list-pets",
 			Short: "List all pets",
+			Long: `Returns all pets in the store, optionally filtered by status.
+
+Responses:
+
+  200: A list of pets`,
 			RunE: func(cmd *cobra.Command, args []string) error {
 				query := url.Values{}
 				path := "/pets"
@@ -119,7 +145,7 @@ func init() {
 			},
 		}
 
-		cmd.Flags().Int32Var(&flaglimit, "limit", 0, "")
+		cmd.Flags().Int32Var(&flaglimit, "limit", 0, "Maximum number of pets to return")
 
 		cmd.Flags().StringVar(&flagstatus, "status", "", "")
 
